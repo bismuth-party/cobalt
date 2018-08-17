@@ -1,0 +1,43 @@
+/*
+.topbar {
+	background-color: #fcc;
+}
+
+.topbar .usericon {
+	background-color: #aff;
+}
+
+.topbar .groupname {
+	background-color: #aff;
+}
+
+.grouplist {
+	background-color: #cfc;
+}
+
+.grouplist li {
+	background-color: #faf;
+}
+
+.content {
+	background-color: #ccf;
+}
+
+.content .graph {
+	background-color: #000;
+}
+*/
+
+canvas {
+	background-color: #fff;
+}
+
+
+.topbar .groupname {
+	font-family: 'Patrick Hand';
+	font-size: 200%;
+}
+
+.grouplist li.active img {
+	border: 3px solid #099;
+}

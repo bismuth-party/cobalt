@@ -1,0 +1,164 @@
+html, body {
+	margin: 0;
+	padding: 0;
+	width: 100%;
+	height: 100%;
+}
+
+
+body {
+	font-family: sans-serif;
+	font-size: 15pt;
+	line-height: 1.3em;
+}
+
+.topbar {
+	width: 100%;
+
+	height: calc(60px - 3px);
+	border-bottom: 3px solid #999;
+
+	white-space: nowrap;
+}
+
+.topbar .usericon, .topbar .groupname {
+	display: block;
+	float: left;
+
+	padding: 0;
+	margin: 0;
+	border: 0;
+}
+
+.topbar .usericon {
+	height: calc(100% - 2*5px);
+	margin-top: 5px;
+	margin-bottom: 5px;
+
+	width: calc(60px - 2*5px);
+	margin-left: 5px;
+	margin-right: 5px;
+}
+
+.topbar .usericon img {
+	height: 100%;
+
+	border-radius: 30px;
+}
+
+.topbar .groupname {
+	margin-top: 15px;
+
+	white-space: nowrap;
+}
+
+
+
+.grouplist {
+	min-height: calc(100% - 60px);
+	float: left;
+
+	width: calc(60px - 3px);
+	border-right: 3px solid #999;
+}
+
+.grouplist ul, .grouplist ul li, .grouplist ul li img {
+	margin: 0;
+	padding: 0;
+	display: inline-block;
+}
+
+.grouplist ul {
+	list-style: none;
+
+	padding-top: 10%;
+}
+
+.grouplist ul li {
+	width: 100%;
+
+	text-align: center;
+
+	border: 0;
+}
+
+.grouplist ul li img {
+	width: 80%;
+	height: 80%;
+
+	border-radius: 30px;
+	border: 3px solid transparent;
+
+	transition: border 300ms ease-in-out;
+}
+
+
+.content {
+	width: calc(100% - 60px - 2*5%);
+	padding-left: 5%;
+	padding-right: 5%;
+
+	/* TODO: Figure out where that 20px comes from */
+	height: calc(100% - 60px - 2*2%      - 20px);
+	padding-top: 2%;
+	padding-bottom: 2%;
+
+
+	display: grid;
+	grid-gap: 2%;
+	grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.content .graph {
+	width: 100%;
+
+	padding: 0;
+	margin: 0;
+}
+
+.content .graph img, .content .graph canvas {
+	width: 100%;
+}
+
+
+canvas {
+	image-rendering: -moz-crisp-edges;
+	image-rendering: -webkit-crisp-edges;
+	image-rendering: pixelated;
+}
+
+
+
+
+@media(max-width: 500px) {
+	.grouplist {
+		height: 60px;
+		min-height: unset;
+		width: 100%;
+		border: 0;
+		float: unset;
+	}
+
+	.grouplist ul {
+		padding-top: 0;
+		height: 100%;
+	}
+
+	.grouplist ul li {
+		width: unset;
+		height: 100%;
+
+		display: block;
+		float: left;
+	}
+
+	.content {
+		width: calc(100% - 2*5%);
+
+		display: block;
+	}
+
+	.content .graph img {
+		width: 100%;
+	}
+}
