@@ -127,27 +127,3 @@ Graph.prototype.draw_bar = function() {
 		this.ctx.closePath();
 	});
 };
-
-
-
-function drawGraphs() {
-	// Fake data
-	let raw_data_0 = [[0, 1000], [3, 2000], [6, 5000], [9, 0000], [12, 2000], [15, 1000], [18, 4000], [21, 2000], [24, 5000]];
-	let raw_data_1 = [[0, 4000], [3, 1000], [6, 2000], [9, 1000], [12, 6000], [15, 5000], [18, 2000], [21, 3000], [24, 1000]];
-
-	let msgs_hour_canvas = document.createElement('canvas');
-	msgs_hour_canvas.width = 500;
-	msgs_hour_canvas.height = 500;
-	msgs_hour_canvas.style.width = '500px';
-	msgs_hour_canvas.style.height = '500px';
-
-	let ctx = msgs_hour_canvas.getContext('2d');
-
-	let msgs_hour_graph = new Graph(ctx);
-	msgs_hour_graph.add_dataset(raw_data_0, 'red');
-	msgs_hour_graph.add_dataset(raw_data_1, 'green');
-	msgs_hour_graph.draw_bar();
-
-	let msgs_hour_elem = document.getElementById('graph-msgs-hour');
-	msgs_hour_elem.appendChild(msgs_hour_canvas);
-}
