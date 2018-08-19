@@ -49,7 +49,9 @@ function activateGroup(groupid) {
 	let groupname = "Bismuth.party";
 
 	// Generate random data
-	let raw_data = [[], [], []];
+	let raw_data = [[], [], [],
+		[[0, 0], [24, 1000]],
+	];
 
 	for (let x=0; x <= 24; x += 3) {
 		raw_data[0].push([x, Math.random() * 1000]);
@@ -71,6 +73,7 @@ function activateGroup(groupid) {
 		[raw_data[0], 'red'],
 		[raw_data[1], 'green'],
 		[raw_data[2], 'blue'],
+		[raw_data[3], '#909'],
 	]);
 }
 

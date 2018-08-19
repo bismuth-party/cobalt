@@ -9,8 +9,12 @@ function Graph(ctx) {
 
 
 Graph.prototype.get_scale = function() {
-	let width  = this.ctx.canvas.width  * 0.90;
+	let width  = this.ctx.canvas.width  * 0.80;
+	let y_padding = this.ctx.canvas.width * 0.1; // padding left of the y-axis
+
 	let height = this.ctx.canvas.height * 0.90;
+	let x_padding = this.ctx.canvas.height * 0.05; // padding under the x-axis
+
 
 	// Collect all data from all datasets
 	let data = this.datasets.reduce((acc, dataset) => acc.concat(dataset.data), []);
@@ -39,8 +43,7 @@ Graph.prototype.get_scale = function() {
 		minx, maxx,
 		miny, maxy,
 		width, height,
-		x_padding: this.ctx.canvas.height * 0.05,
-		y_padding: this.ctx.canvas.width * 0.05,
+		x_padding, y_padding,
 	};
 };
 
@@ -51,7 +54,7 @@ function scale_data(scale, data) {
 
 			// The canvas has (0,0) top left, but we want (0,0) to be bottom left,
 			// so subtract y value from height
-			scale.height - ((y - scale.miny) * scale.y),
+			scale.height - ((y - scale.miny) * scale.y) + scale.x_padding,
 		])
 	);
 }
@@ -71,7 +74,7 @@ Graph.prototype.add_dataset = function(data, color) {
 		data,
 		color,
 	});
-}
+};
 
 
 Graph.prototype.draw_bar = function() {
@@ -86,7 +89,6 @@ Graph.prototype.draw_bar = function() {
 	this.ctx.font = scale.x_padding + 'px monospace';
 	this.ctx.strokeStyle = 'black';
 
-
 	let amount = (scale.maxx - scale.minx) / 3;
 	for (let i=0; i <= amount; i++) {
 		let actual_x = scale.width * (i / amount) + scale.y_padding;
@@ -96,7 +98,7 @@ Graph.prototype.draw_bar = function() {
 
 		this.ctx.beginPath();
 		this.ctx.moveTo(actual_x, actual_height - scale.x_padding);
-		this.ctx.lineTo(actual_x, 0);
+		this.ctx.lineTo(actual_x, scale.x_padding);
 		this.ctx.strokeStyle = 'black';
 		this.ctx.stroke();
 		this.ctx.closePath();
@@ -105,6 +107,30 @@ Graph.prototype.draw_bar = function() {
 
 	// y-axis
 	this.ctx.fillRect(scale.y_padding, scale.x_padding, 1, actual_height - 2*scale.x_padding);
+	this.ctx.font = (scale.y_padding / 2) + 'px monospace';
+	this.ctx.strokeStyle = 'black';
+
+
+	const STEP_SIZE = 100;
+
+	amount = 10;
+	for (let i=0; i <= amount; i++) {
+		let actual_y = actual_height - (scale.width * (i / amount) + scale.x_padding);
+		let y = (i / amount) * (scale.maxy - scale.miny) + scale.miny;
+
+		y /= STEP_SIZE;
+
+		this.ctx.fillText(dec(y, 0), 0, actual_y);
+
+		this.ctx.beginPath();
+		this.ctx.moveTo(scale.y_padding, actual_y);
+		this.ctx.lineTo(actual_width - scale.y_padding, actual_y);
+		this.ctx.strokeStyle = 'black';
+		this.ctx.stroke();
+		this.ctx.closePath();
+	}
+
+
 
 	// Draw all datasets
 	this.datasets.forEach((dataset) => {
