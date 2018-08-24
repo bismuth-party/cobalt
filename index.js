@@ -48,18 +48,6 @@ function activateGroup(groupid) {
 	// TODO: Get data from backend
 	let groupname = "Bismuth.party";
 
-	// Generate random data
-	let raw_data = [[], [], [],
-		[[0, 0], [24, 1000]],
-	];
-
-	for (let x=0; x <= 24; x += 3) {
-		raw_data[0].push([x, Math.random() * 1000]);
-		raw_data[1].push([x, Math.random() * 1000]);
-		raw_data[2].push([x, Math.random() * 1000]);
-	}
-
-
 	// Set new title
 	document.querySelector('.groupname').innerHTML = `<code style="font-size: 12pt;">{${token}}</code> ${groupname}  [${groupid}]`;
 
@@ -69,12 +57,7 @@ function activateGroup(groupid) {
 	});
 
 	// Draw new graphs
-	drawGraphs([
-		[raw_data[0], 'red'],
-		[raw_data[1], 'green'],
-		[raw_data[2], 'blue'],
-		[raw_data[3], '#909'],
-	]);
+	drawGraphs();
 }
 
 
@@ -84,25 +67,81 @@ function getUserToken() {
 
 
 
-function drawGraphs(datasets) {
-	let msgs_hour_canvas = document.createElement('canvas');
-	msgs_hour_canvas.width = 500;
-	msgs_hour_canvas.height = 500;
-	msgs_hour_canvas.style.width = '500px';
-	msgs_hour_canvas.style.height = '500px';
+function drawGraphs() {
+	// Bar graph
+	{
+		// Generate random data
+		let raw_data = [[], [], [],
+			[[0, 0], [24, 1000]],
+		];
 
-	let ctx = msgs_hour_canvas.getContext('2d');
+		for (let x=0; x <= 24; x += 3) {
+			raw_data[0].push([x, Math.random() * 1000]);
+			raw_data[1].push([x, Math.random() * 1000]);
+			raw_data[2].push([x, Math.random() * 1000]);
+		}
 
-	let msgs_hour_graph = new Graph(ctx);
+		let datasets = [
+			[raw_data[0], '#f00'],
+			[raw_data[1], '#0f0'],
+			[raw_data[2], '#00f'],
+			[raw_data[3], '#f0f'],
+		];
 
-	datasets.forEach((dataset) => {
-		msgs_hour_graph.add_dataset(...dataset);
-	});
 
-	msgs_hour_graph.draw_bar();
 
-	let msgs_hour_elem = document.getElementById('graph-msgs-hour');
-	msgs_hour_elem.appendChild(msgs_hour_canvas);
+		let msgs_hour_canvas = document.createElement('canvas');
+		msgs_hour_canvas.width = 500;
+		msgs_hour_canvas.height = 500;
+		msgs_hour_canvas.style.width = '500px';
+		msgs_hour_canvas.style.height = '500px';
+
+		let ctx = msgs_hour_canvas.getContext('2d');
+
+		let msgs_hour_graph = new Graph(ctx);
+
+		datasets.forEach((dataset) => {
+			msgs_hour_graph.add_dataset(...dataset);
+		});
+
+		msgs_hour_graph.draw_bar();
+
+		let msgs_hour_elem = document.getElementById('graph-msgs-hour');
+		msgs_hour_elem.appendChild(msgs_hour_canvas);
+	}
+
+
+
+	// Pie chart
+	{
+		// Generate random data
+		let datasets = [];
+
+		for (let i=1; i <= 20; i++) {
+			datasets.push([Math.random() * Math.pow(1.3, i)]);
+		}
+
+
+
+		let msgs_user_canvas = document.createElement('canvas');
+		msgs_user_canvas.width = 500;
+		msgs_user_canvas.height = 500;
+		msgs_user_canvas.style.width = '500px';
+		msgs_user_canvas.style.height = '500px';
+
+		let ctx = msgs_user_canvas.getContext('2d');
+
+		let msgs_user_graph = new Graph(ctx);
+
+		datasets.forEach((dataset) => {
+			msgs_user_graph.add_dataset(...dataset);
+		});
+
+		msgs_user_graph.draw_pie();
+
+		let msgs_user_elem = document.getElementById('graph-msgs-user');
+		msgs_user_elem.appendChild(msgs_user_canvas);
+	}
 }
 
 
@@ -117,8 +156,13 @@ else {
 
 
 
+const reload = () => location.reload(location);
+
 // Refresh page every second
-let timeout_id = setTimeout(location.reload.bind(location), 1000);
+let timeout_id = setTimeout(reload, 1000);
+
+// Reload page if hash changes
+document.addEventListener('hashchange', reload, false);
 
 // Stop refreshing if clicked anywhere on the page
 document.addEventListener('click', clearTimeout.bind(null, timeout_id));

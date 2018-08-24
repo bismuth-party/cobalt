@@ -1,8 +1,44 @@
-function Graph(ctx) {
+// The fallback palette if none is specified
+const PALETTE = [
+	'#d00',  // R
+	'#d60',
+	'#dd0',
+	'#6d0',
+	// '#0d0',  // G
+	'#0d6',
+	'#0dd',
+	'#06d',
+	'#00d',  // B
+	'#60d',
+	'#d0d',
+	'#d06',
+
+	'#400',  // r
+	'#480',
+	'#440',
+	'#840',
+	'#040',  // g
+	'#048',
+	'#044',
+	'#084',
+	'#004', // b
+	'#804',
+	'#404',
+	'#408',
+];
+
+
+// Limit of which groups get merged into a single "others" group
+const SMALL_PERC = 0.03;
+
+
+
+function Graph(ctx, palette) {
 	if (ctx.constructor.name !== 'CanvasRenderingContext2D') {
 		throw new TypeError("ctx isn't a valid Context2D");
 	}
 
+	this.palette = palette || PALETTE;
 	this.ctx = ctx;
 	this.datasets = [];
 }
@@ -87,8 +123,9 @@ Graph.prototype.draw_bar = function() {
 	// x-axis
 	this.ctx.fillRect(scale.y_padding, actual_height - scale.x_padding - 1, actual_width - 2*scale.y_padding, 1);
 	this.ctx.font = scale.x_padding + 'px monospace';
-	this.ctx.strokeStyle = 'black';
+	this.ctx.strokeStyle = '#000';
 
+	// x guide lines
 	let amount = (scale.maxx - scale.minx) / 3;
 	for (let i=0; i <= amount; i++) {
 		let actual_x = scale.width * (i / amount) + scale.y_padding;
@@ -99,7 +136,7 @@ Graph.prototype.draw_bar = function() {
 		this.ctx.beginPath();
 		this.ctx.moveTo(actual_x, actual_height - scale.x_padding);
 		this.ctx.lineTo(actual_x, scale.x_padding);
-		this.ctx.strokeStyle = 'black';
+		this.ctx.strokeStyle = '#000';
 		this.ctx.stroke();
 		this.ctx.closePath();
 	}
@@ -108,24 +145,21 @@ Graph.prototype.draw_bar = function() {
 	// y-axis
 	this.ctx.fillRect(scale.y_padding, scale.x_padding, 1, actual_height - 2*scale.x_padding);
 	this.ctx.font = (scale.y_padding / 2) + 'px monospace';
-	this.ctx.strokeStyle = 'black';
+	this.ctx.strokeStyle = '#000';
 
 
-	const STEP_SIZE = 100;
-
+	// y guide lines
 	amount = 10;
 	for (let i=0; i <= amount; i++) {
-		let actual_y = actual_height - (scale.width * (i / amount) + scale.x_padding);
+		let actual_y = actual_height - (scale.height * (i / amount) + scale.x_padding);
 		let y = (i / amount) * (scale.maxy - scale.miny) + scale.miny;
-
-		y /= STEP_SIZE;
 
 		this.ctx.fillText(dec(y, 0), 0, actual_y);
 
 		this.ctx.beginPath();
 		this.ctx.moveTo(scale.y_padding, actual_y);
 		this.ctx.lineTo(actual_width - scale.y_padding, actual_y);
-		this.ctx.strokeStyle = 'black';
+		this.ctx.strokeStyle = '#000';
 		this.ctx.stroke();
 		this.ctx.closePath();
 	}
@@ -133,7 +167,7 @@ Graph.prototype.draw_bar = function() {
 
 
 	// Draw all datasets
-	this.datasets.forEach((dataset) => {
+	this.datasets.forEach((dataset, ix) => {
 		// Apply scale
 		let scaled_data = scale_data(scale, dataset.data);
 
@@ -147,9 +181,70 @@ Graph.prototype.draw_bar = function() {
 			this.ctx.lineTo(x, y);
 		});
 
-		this.ctx.strokeStyle = dataset.color;
+		this.ctx.strokeStyle = dataset.color || this.palette[ix % this.palette.length];
 		this.ctx.stroke();
 
 		this.ctx.closePath();
+	});
+};
+
+
+Graph.prototype.draw_pie = function() {
+	let actual_height = this.ctx.canvas.height;
+	let actual_width = this.ctx.canvas.width;
+
+
+	// Draw outline
+	this.ctx.beginPath();
+
+	this.ctx.arc(actual_width / 2, actual_height / 2, actual_width / 2, 0, 2 * Math.PI);
+
+	this.ctx.strokeStyle = '#000';
+	this.ctx.stroke();
+
+	this.ctx.closePath();
+
+
+
+	let total = this.datasets.reduce((acc, cur) => acc + cur.data, 0);
+	let prevperc = 0;
+
+	this.datasets.sort((a, b) => b.data - a.data);
+	this.datasets.map((dataset) => { dataset.perc = dataset.data / total; });
+
+
+	let small_sets = this.datasets.filter((dataset) => dataset.perc < SMALL_PERC);
+	let big_sets = this.datasets.filter((dataset) => dataset.perc >= SMALL_PERC);
+
+	let others = small_sets.reduce((acc, cur) => acc + cur.data, 0);
+	let others_group = { data: others, color: '#000', perc: others / total };
+
+	let datasets = big_sets.concat(others_group);
+
+	datasets.forEach((dataset, ix) => {
+		const _360 = 2 * Math.PI;
+		const _90 = 0.5 * Math.PI;
+
+		this.ctx.beginPath();
+
+		this.ctx.arc(
+			actual_width / 2, // x
+			actual_height / 2, // y
+			actual_width / 2 - 1, // r   (-1 for the stroke width)
+
+			// subtract _90 because instead of the x-axis, it should start on the y-axis
+			prevperc * _360 - _90, // startAngle
+			(prevperc + dataset.perc) * _360 - _90 // endAngle
+		);
+
+		this.ctx.lineTo(actual_width / 2, actual_height / 2);
+
+		this.ctx.fillStyle = dataset.color || this.palette[ix % this.palette.length];
+		this.ctx.strokeStyle = '#000';
+		this.ctx.stroke();
+		this.ctx.fill();
+		this.ctx.closePath();
+
+		prevperc += dataset.perc;
 	});
 };
