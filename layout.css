@@ -92,6 +92,10 @@ body {
 	transition: border 300ms ease-in-out;
 }
 
+.group {
+	cursor: pointer;
+}
+
 
 .content {
 	width: calc(100% - 60px - 2*5%);

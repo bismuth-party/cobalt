@@ -17,21 +17,28 @@
 	</head>
 	<body>
 		<div class="topbar">
-			<div class="usericon"><img src="imgs/user.jpg"></div>
-			<div class="groupname">Bismuth.party</div>
+			<div class="usericon"><img src="imgs/user.jpg" alt="avatar" id="js-avatar"></div>
+			<div class="groupname" id="js-title">Bismuth.party</div>
 		</div>
 
 		<div class="grouplist">
-			<ul>
+			<ul id="js-grouplist">
+				<!--
 				<li data-groupid="-1"><img src="imgs/group0.png"></li>
 				<li data-groupid="-2"><img src="imgs/group1.png"></li>
 				<li data-groupid="-3"><img src="imgs/group2.png"></li>
+				-->
 			</ul>
 		</div>
 
-		<div class="content">
+		<div class="content" id="js-content">
+			<noscript>
+				<h1>Sorry, this page won't work without JavaScript</h1>
+			</noscript>
+
 			<div class="graph" id="graph-msgs-hour"></div>
 			<div class="graph" id="graph-msgs-user"></div>
+			<div class="graph" id="graph-msgs-weekday"></div>
 		</div>
 	</body>
 </html>
