@@ -32,6 +32,10 @@ const PALETTE = [
 const SMALL_PERC = 0.03;
 
 
+const deg360 = 2 * Math.PI;
+const deg90 = 0.5 * Math.PI;
+
+
 
 function Graph(ctx, palette) {
 	if (ctx.constructor.name !== 'CanvasRenderingContext2D') {
@@ -83,6 +87,7 @@ Graph.prototype.get_scale = function() {
 	};
 };
 
+
 function scale_data(scale, data) {
 	return data.map(
 		([x, y]) => ([
@@ -97,15 +102,88 @@ function scale_data(scale, data) {
 
 
 /* round `x` on `d` decimals */
-function dec(x, d) {
+function round(x, d) {
 	const f = Math.pow(10, d);
 
 	return Math.round(x * f) / f;
 }
 
 
+function isNumber(x) {
+	return typeof x === 'number' && ! isNaN(x);
+}
+function isString(x) {
+	return typeof x === 'string';
+}
+
+
+function processPieDataset(input, palette) {
+	// dataset.data has to be of type [num,str]
+	input.forEach((dataset) => {
+		if (
+			! Array.isArray(dataset.data) ||
+			dataset.data.length !== 2 ||
+			! isNumber(dataset.data[0]) ||
+			! isString(dataset.data[1])
+		) {
+			console.error(dataset.data);
+
+			throw new TypeError("Invalid dataset, see above");
+		}
+	});
+
+
+	// Calculate total amount of data
+	let total = input.reduce((acc, dataset) => acc + dataset.data[0], 0);
+
+	// Add percentages to dataset
+	input.map((dataset) => {
+		dataset.perc = dataset.data[0] / total;
+	});
+
+
+	// Bundle small sets into "others" group
+	let small_sets = input.filter((dataset) => dataset.perc < SMALL_PERC);
+
+	let others = small_sets.reduce((acc, dataset) => acc + dataset.data[0], 0);
+	let others_group = {
+		data: [others, 'others'],
+		color: '#000',
+		perc: others / total,
+	};
+
+
+	// Create new dataset with the big sets and the others group
+	let big_sets = input.filter((dataset) => dataset.perc >= SMALL_PERC);
+	big_sets.sort((a, b) => b.data[0] - a.data[0]);
+	let output = big_sets.concat(others_group);
+
+
+	output.forEach((dataset, ix) => {
+		dataset.color = palette[ix % palette.length];
+	});
+
+	return output;
+}
+
+
+
 
 Graph.prototype.add_dataset = function(data, color) {
+	if (! Array.isArray(data)) {
+		console.error(data);
+
+		throw new TypeError("data has to be array, `" + typeof data + "` given");
+	}
+
+	if (typeof color !== 'undefined' && typeof color !== 'string') {
+		console.error(color);
+
+		throw new TypeError(
+			"color has to be a string or undefined, `" + typeof color + "` given"
+		);
+	}
+
 	this.datasets.push({
 		data,
 		color,
@@ -113,7 +191,25 @@ Graph.prototype.add_dataset = function(data, color) {
 };
 
 
+
 Graph.prototype.draw_bar = function() {
+	// datasets.data has to be of type [[num,num]*]
+	this.datasets.forEach((dataset) => {
+		dataset.data.forEach((data) => {
+			if (
+				! Array.isArray(data) ||
+				data.length !== 2 ||
+				! isNumber(data[0]) ||
+				! isNumber(data[1])
+			) {
+				console.error(data);
+
+				throw new TypeError("Invalid data in dataset, see above");
+			}
+		});
+	});
+
+
 	let actual_height = this.ctx.canvas.height;
 	let actual_width = this.ctx.canvas.width;
 
@@ -131,7 +227,9 @@ Graph.prototype.draw_bar = function() {
 		let actual_x = scale.width * (i / amount) + scale.y_padding;
 		let x = (i / amount) * (scale.maxx - scale.minx) + scale.minx;
 
-		this.ctx.fillText(dec(x, 2), actual_x - this.ctx.measureText(dec(x, 2)+'').width / 2, actual_height);
+		let text = round(x, 2).toString();
+		let textWidth = this.ctx.measureText(text).width;
+		this.ctx.fillText(text, actual_x - textWidth / 2, actual_height);
 
 		this.ctx.beginPath();
 		this.ctx.moveTo(actual_x, actual_height - scale.x_padding);
@@ -143,7 +241,13 @@ Graph.prototype.draw_bar = function() {
 
 
 	// y-axis
-	this.ctx.fillRect(scale.y_padding, scale.x_padding, 1, actual_height - 2*scale.x_padding);
+	this.ctx.fillRect(
+		scale.y_padding
+		, scale.x_padding
+		, 1
+		, actual_height - 2 * scale.x_padding
+	);
+
 	this.ctx.font = (scale.y_padding / 2) + 'px monospace';
 	this.ctx.strokeStyle = '#000';
 
@@ -154,7 +258,12 @@ Graph.prototype.draw_bar = function() {
 		let actual_y = actual_height - (scale.height * (i / amount) + scale.x_padding);
 		let y = (i / amount) * (scale.maxy - scale.miny) + scale.miny;
 
-		this.ctx.fillText(dec(y, 0), 0, actual_y);
+		let text = round(y, 0).toString();
+		this.ctx.fillText(
+			text
+			, 0
+			, actual_y
+		);
 
 		this.ctx.beginPath();
 		this.ctx.moveTo(scale.y_padding, actual_y);
@@ -163,7 +272,6 @@ Graph.prototype.draw_bar = function() {
 		this.ctx.stroke();
 		this.ctx.closePath();
 	}
-
 
 
 	// Draw all datasets
@@ -175,10 +283,10 @@ Graph.prototype.draw_bar = function() {
 		this.ctx.beginPath();
 
 		let first = scaled_data.shift();
-		this.ctx.moveTo(first[0], first[1]);
+		this.ctx.moveTo(...first);
 
-		scaled_data.forEach(([x, y]) => {
-			this.ctx.lineTo(x, y);
+		scaled_data.forEach((coor) => {
+			this.ctx.lineTo(...coor);
 		});
 
 		this.ctx.strokeStyle = dataset.color || this.palette[ix % this.palette.length];
@@ -190,6 +298,9 @@ Graph.prototype.draw_bar = function() {
 
 
 Graph.prototype.draw_pie = function() {
+	let datasets = processPieDataset(this.datasets, this.palette);
+
+
 	let actual_height = this.ctx.canvas.height;
 	let actual_width = this.ctx.canvas.width;
 
@@ -197,7 +308,13 @@ Graph.prototype.draw_pie = function() {
 	// Draw outline
 	this.ctx.beginPath();
 
-	this.ctx.arc(actual_width / 2, actual_height / 2, actual_width / 2, 0, 2 * Math.PI);
+	this.ctx.arc(
+		actual_width / 2		// x
+		, actual_height / 2		// y
+		, actual_width / 2		// radius
+		, 0						// startAngle
+		, 2 * Math.PI			// endAngle
+	);
 
 	this.ctx.strokeStyle = '#000';
 	this.ctx.stroke();
@@ -205,46 +322,51 @@ Graph.prototype.draw_pie = function() {
 	this.ctx.closePath();
 
 
-
-	let total = this.datasets.reduce((acc, cur) => acc + cur.data, 0);
+	// Draw data
 	let prevperc = 0;
-
-	this.datasets.sort((a, b) => b.data - a.data);
-	this.datasets.map((dataset) => { dataset.perc = dataset.data / total; });
-
-
-	let small_sets = this.datasets.filter((dataset) => dataset.perc < SMALL_PERC);
-	let big_sets = this.datasets.filter((dataset) => dataset.perc >= SMALL_PERC);
-
-	let others = small_sets.reduce((acc, cur) => acc + cur.data, 0);
-	let others_group = { data: others, color: '#000', perc: others / total };
-
-	let datasets = big_sets.concat(others_group);
-
-	datasets.forEach((dataset, ix) => {
-		const _360 = 2 * Math.PI;
-		const _90 = 0.5 * Math.PI;
-
+	datasets.forEach((dataset) => {
 		this.ctx.beginPath();
 
 		this.ctx.arc(
-			actual_width / 2, // x
-			actual_height / 2, // y
-			actual_width / 2 - 1, // r   (-1 for the stroke width)
+			actual_width / 2,		// x
+			actual_height / 2,		// y
+			actual_width / 2 - 1,	// r   (-1 for the stroke width)
 
-			// subtract _90 because instead of the x-axis, it should start on the y-axis
-			prevperc * _360 - _90, // startAngle
-			(prevperc + dataset.perc) * _360 - _90 // endAngle
+			// subtract 90 degrees because instead of the x-axis,
+			// it should start on the y-axis
+			prevperc * deg360 - deg90, // startAngle
+			(prevperc + dataset.perc) * deg360 - deg90 // endAngle
 		);
+		prevperc += dataset.perc;
+
 
 		this.ctx.lineTo(actual_width / 2, actual_height / 2);
 
-		this.ctx.fillStyle = dataset.color || this.palette[ix % this.palette.length];
+		this.ctx.fillStyle = dataset.color;
 		this.ctx.strokeStyle = '#000';
 		this.ctx.stroke();
 		this.ctx.fill();
 		this.ctx.closePath();
-
-		prevperc += dataset.perc;
 	});
+};
+
+
+Graph.prototype.draw_pie_legend = function(legendId) {
+	let datasets = processPieDataset(this.datasets, this.palette);
+	let legendElem = document.getElementById(legendId);
+
+	datasets.forEach((dataset) => {
+		let [amount, name] = dataset.data;
+
+		if (amount === 0) return;
+
+		let field = document.createElement('li');
+		field.className = '';
+		field.style.backgroundColor = dataset.color;
+		field.innerHTML = name + ' [' + amount + ']';
+		legendElem.appendChild(field);
+	});
+
+
+	console.log(datasets);
 };

@@ -1,7 +1,9 @@
 /* globals Graph */
 
 
-const ROOT_URL = 'http://thorium.bismuth.party/api/';
+// const ROOT_URL = 'http://thorium.bismuth.party/api/';
+const ROOT_URL = 'http://localhost:8467/api/';
+
 let __activeGroup = 0;
 
 
@@ -39,10 +41,10 @@ function createGroupList() {
 		let chats = userdata.chats;
 		let grouplistElem = document.getElementById('js-grouplist');
 
-		chats.forEach((chatid) => {
+		chats.forEach((groupid) => {
 			let chatElem = document.createElement('li');
 			chatElem.classList.add('group');
-			chatElem.dataset.groupid = chatid;
+			chatElem.dataset.groupid = groupid;
 
 			// TODO: Get chat avatar
 			chatElem.innerHTML = '<img src="imgs/group1.png">';
@@ -56,8 +58,14 @@ function createGroupList() {
 					});
 
 
-				// Set new active class
 				let target = event.target;
+
+				// The image is clicked, but the target should be the li parent.
+				if (target.nodeName === 'IMG') {
+					target = target.parentNode;
+				}
+
+				// Set new active class
 				target.classList.add('active');
 
 				// Execute tasks linked to groupid
@@ -94,6 +102,7 @@ function getUserToken() {
 
 
 
+// datasets has to be of type [[[number*], string?]*]
 function createGraph(datasets, parentElemID) {
 	let canvas = document.createElement('canvas');
 	canvas.width = 500;
@@ -105,17 +114,19 @@ function createGraph(datasets, parentElemID) {
 	let graph = new Graph(ctx);
 
 	datasets.forEach((dataset) => {
-		graph.add_dataset(...dataset);
+		graph.add_dataset(dataset);
 	});
 
 	let parent_elem = document.getElementById(parentElemID);
 	parent_elem.appendChild(canvas);
+
+	return graph;
 }
 
 
 
-function objectToKVArray(obj) {
-	return Object.keys(obj).map((key) => [key, obj[key]]);
+function objectToNumKVArray(obj) {
+	return Object.keys(obj).map((key) => [parseFloat(key), obj[key]]);
 }
 
 
@@ -126,54 +137,33 @@ function drawGraphs() {
 	});
 
 
-	/*
-	//// BAR CHART
-	// Generate random data
-	let raw_data = [[], [], [],
-		[[0, 0], [24, 1000]],
-	];
-
-	for (let x=0; x <= 24; x += 3) {
-		raw_data[0].push([x, Math.random() * 1000]);
-		raw_data[1].push([x, Math.random() * 1000]);
-		raw_data[2].push([x, Math.random() * 1000]);
-	}
-
-	let datasets = [
-		[raw_data[0], '#f00'],
-		[raw_data[1], '#0f0'],
-		[raw_data[2], '#00f'],
-		[raw_data[3], '#f0f'],
-	];
-
-
-	//// PIE CHART
-	// Generate random data
-	let datasets = [];
-
-	for (let i=1; i <= 20; i++) {
-	datasets.push([Math.random() * Math.pow(1.3, i)]);
-	*/
-
-
-
+	// Get and draw new graphs
 	send('GET', '/chat/' + __activeGroup + '/extended', null, (data) => {
 		let stats = data.stats;
 		let raw_msgs_user = stats.messages_per_user;
 		let raw_msgs_hour = stats.messages_per_hour;
 		let raw_msgs_weekday = stats.messages_per_weekday;
 
-		let msgs_user = Object.keys(raw_msgs_user).map(key => [raw_msgs_user[key]]);
+		console.log(stats);
 
+
+		let msgs_user = Object.keys(raw_msgs_user).map((key) => {
+			// TODO: Get actual username
+			let username = key.toString();
+			return [raw_msgs_user[key], username];
+		});
 		let msgs_user_graph = createGraph(msgs_user, 'graph-msgs-user');
 		msgs_user_graph.draw_pie();
+		msgs_user_graph.draw_pie_legend('graph-msgs-user-legend');
 
-		let msgs_hour = objectToKVArray(raw_msgs_hour);
-		let msgs_hour_graph = createGraph(msgs_hour, 'graph-msgs-hour');
+
+		let msgs_hour = objectToNumKVArray(raw_msgs_hour);
+		let msgs_hour_graph = createGraph([msgs_hour], 'graph-msgs-hour');
 		msgs_hour_graph.draw_bar();
 
-		let msgs_weekday = objectToKVArray(raw_msgs_weekday);
-		let msgs_weekday_graph = createGraph(msgs_weekday, 'graph-msgs-weekday');
+
+		let msgs_weekday = objectToNumKVArray(raw_msgs_weekday);
+		let msgs_weekday_graph = createGraph([msgs_weekday], 'graph-msgs-weekday');
 		msgs_weekday_graph.draw_bar();
 	});
 }

@@ -28,6 +28,13 @@
 }
 */
 
+/*
+.content .graph, .content .graph-legend {
+	background-color: #ff9;
+	border: 5px solid #000;
+}
+*/
+
 canvas {
 	background-color: #fff;
 }
@@ -38,6 +45,12 @@ canvas {
 	font-size: 200%;
 }
 
+
 .grouplist li.active img {
 	border: 3px solid #099;
+}
+
+
+.content .graph-legend > ul > li {
+	font-size: 20pt;
 }
