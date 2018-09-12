@@ -1,8 +1,8 @@
 /* globals Graph */
 
 
-// const ROOT_URL = 'http://thorium.bismuth.party/api/';
-const ROOT_URL = 'http://localhost:8467/api/';
+const ROOT_URL = 'http://thorium.bismuth.party/api/';
+// const ROOT_URL = 'http://localhost:8467/api/';
 
 let __activeGroup = 0;
 
